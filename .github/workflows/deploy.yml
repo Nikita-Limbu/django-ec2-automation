@@ -1,0 +1,53 @@
+ name: Django EC2 Auto Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: "ap-south-1"
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    - name: Terraform Init and Apply
+      run: |
+        cd infra
+        terraform init
+        terraform apply -auto-approve
+
+    # Use the existing PEM key from GitHub Secrets
+    - name: Add SSH Key
+      run: |
+        echo "${{ secrets.EC2_KEY }}" > ec2-key.pem
+        chmod 600 ec2-key.pem
+
+    - name: Deploy Django App on EC2
+      run: |
+        EC2_IP=$(cd infra && terraform output -raw public_ip)
+        echo "Deploying on $EC2_IP"
+        ssh -o StrictHostKeyChecking=no -i ec2-key.pem ubuntu@$EC2_IP << 'EOF'
+          sudo docker pull nikitalimbu/helloworld-django:latest
+          sudo docker stop django-container || true
+          sudo docker rm django-container || true
+          sudo docker run -d -p 8000:8000 --name django-container nikitalimbu/helloworld-django:latest
+        EOF
+
