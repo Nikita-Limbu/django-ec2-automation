@@ -21,7 +21,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-south-1
+        aws-region: ${{ env.AWS_REGION }}
 
     - name: Install Terraform
       uses: hashicorp/setup-terraform@v3
@@ -37,9 +37,9 @@ jobs:
     # Use the existing PEM key from GitHub Secrets
     - name: Add SSH Key
       run: |
-        echo "${{ secrets.EC2_KEY }}" > ec2-key.pem
+        echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
         chmod 600 ec2-key.pem
-
+    
     - name: Deploy Django App on EC2
       run: |
         EC2_IP=$(cd infra && terraform output -raw public_ip)
