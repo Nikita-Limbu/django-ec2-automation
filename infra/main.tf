@@ -60,7 +60,6 @@ resource "aws_instance" "django_instance" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file("./EC2_SSH_KEY.pem")    # References the key saved from the GitHub secret
       host        = self.public_ip
     }
   }

@@ -28,18 +28,18 @@ jobs:
       with:
         terraform_version: 1.6.0
 
+    # Create the .pem key file from the GitHub secret
+    - name: Create SSH Key File
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
+        chmod 600 ec2-key.pem
+
     - name: Terraform Init and Apply
       run: |
         cd infra
         terraform init
         terraform apply -auto-approve
 
-    # Use the existing PEM key from GitHub Secrets
-    - name: Add SSH Key
-      run: |
-        echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
-        chmod 600 ec2-key.pem
-    
     - name: Deploy Django App on EC2
       run: |
         EC2_IP=$(cd infra && terraform output -raw public_ip)
@@ -50,4 +50,3 @@ jobs:
           sudo docker rm django-container || true
           sudo docker run -d -p 8000:8000 --name django-container nikitalimbu/helloworld-django:latest
         EOF
-
