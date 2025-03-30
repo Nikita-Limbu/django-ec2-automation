@@ -1,4 +1,4 @@
- name: Django EC2 Auto Deployment
+name: Django EC2 Auto Deployment
 
 on:
   push:
