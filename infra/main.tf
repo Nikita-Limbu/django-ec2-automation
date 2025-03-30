@@ -4,7 +4,7 @@ provider "aws" {
 
 # Security group for EC2
 resource "aws_security_group" "ec2_sg" {
-  name        = "django-sg"
+  name        = "django-sg-auto"
   description = "Allow SSH and HTTP access"
   
   ingress {
@@ -29,7 +29,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   tags = {
-    Name = "django-ec2-sg"
+    Name = "django-ec2-sg-auto"
   }
 }
 
