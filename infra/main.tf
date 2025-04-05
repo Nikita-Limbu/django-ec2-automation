@@ -4,7 +4,7 @@ provider "aws" {
 
 # Security group for EC2
 resource "aws_security_group" "ec2_sg" {
-  name        = "HW-django-sg-auto"  # Updated name 
+  name        = "HelloWorld-sg-auto-v2"  # Updated name 
   description = "Allow SSH and HTTP access"
   vpc_id      = "vpc-f85c5890"
 
