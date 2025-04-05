@@ -56,57 +56,25 @@ jobs:
             nc -zv $EC2_IP 22 && echo "SSH is ready!" && break
             echo "Attempt $i: SSH not available yet. Retrying in 10s..."
             sleep 10
-          done    
+          done
 
-      - name: Deploy Django App on EC2
+      - name: Upload and Run Deployment Script on EC2
         run: |
           for i in {1..3}; do
-            ssh -o StrictHostKeyChecking=no -i ec2-key.pem ubuntu@$EC2_IP "
-              set -e
+            echo "Uploading deploy.sh..."
+            scp -o StrictHostKeyChecking=no -i ec2-key.pem ./scripts/deploy.sh ubuntu@$EC2_IP:/home/ubuntu/deploy.sh
 
-              # Wait for apt lock and update
-              echo 'Checking for apt lock...'
-              MAX_WAIT=60
-              WAITED=0
-              while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
-                if [ \$WAITED -ge \$MAX_WAIT ]; then
-                  echo 'Timed out waiting for apt lock'
-                  exit 1
-                fi
-                echo 'Apt is locked, waiting...'
-                sleep 5
-                WAITED=\$((WAITED+5))
-              done
-
-              sudo apt update -y
-              sudo apt install -y docker.io curl
-              sudo systemctl start docker
-              sudo systemctl enable docker
-
-              # Install Docker Compose v2
-              DOCKER_CONFIG=\${DOCKER_CONFIG:-\$HOME/.docker}
-              mkdir -p \$DOCKER_CONFIG/cli-plugins
-              curl -SL https://github.com/docker/compose/releases/download/v2.22.0/docker-compose-linux-x86_64 -o \$DOCKER_CONFIG/cli-plugins/docker-compose
-              chmod +x \$DOCKER_CONFIG/cli-plugins/docker-compose
-              docker compose version
-
-              # Stop and remove any running container
-              sudo docker stop django-container || true
-              sudo docker rm django-container || true
-
-              # Pull the latest image
-              sudo docker pull nikitalimbu/helloworld-django:latest
-
-              # Run container
-              sudo docker run -d -p 8000:8000 --name django-container nikitalimbu/helloworld-django:latest
+            echo "Executing deploy.sh on EC2..."
+            ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=5 -i ec2-key.pem ubuntu@$EC2_IP "
+              chmod +x /home/ubuntu/deploy.sh
+              bash /home/ubuntu/deploy.sh
             "
+
             if [ $? -eq 0 ]; then
-              echo "Deployment successful!"
+              echo "Deployment script executed successfully!"
               break
             else
-              echo "Retrying deployment... ($i/3)"
+              echo "Retry $i failed... Retrying in 10 seconds"
               sleep 10
             fi
           done
-
-          echo "Finished attempts"
