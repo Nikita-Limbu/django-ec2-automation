@@ -53,21 +53,21 @@ jobs:
         run: |
           for i in {1..3}; do
             ssh -o StrictHostKeyChecking=no -i ec2-key.pem ubuntu@$EC2_IP <<'EOF'
-              set -e
-              sudo apt update -y
-              sudo apt install -y docker.io docker-compose
-              sudo systemctl start docker
-              sudo systemctl enable docker
+set -e
+sudo apt update -y
+sudo apt install -y docker.io docker-compose
+sudo systemctl start docker
+sudo systemctl enable docker
 
-              # Stop and remove any running container
-              sudo docker stop django-container || true
-              sudo docker rm django-container || true
+# Stop and remove any running container
+sudo docker stop django-container || true
+sudo docker rm django-container || true
 
-              # Pull the latest image
-              sudo docker pull nikitalimbu/helloworld-django:latest
+# Pull the latest image
+sudo docker pull nikitalimbu/helloworld-django:latest
 
-              # Run container
-              sudo docker run -d -p 8000:8000 --name django-container nikitalimbu/helloworld-django:latest
+# Run container
+sudo docker run -d -p 8000:8000 --name django-container nikitalimbu/helloworld-django:latest
 EOF
             if [ $? -eq 0 ]; then
               echo "Deployment successful!"
