@@ -4,9 +4,9 @@ provider "aws" {
 
 # Security group for EC2
 resource "aws_security_group" "ec2_sg" {
-  name        = "django-sg-auto"
+  name        = "django-sg-auto-v2"  # Updated name
   description = "Allow SSH and HTTP access"
-  vpc_id      = "vpc-f85c5890"  # Add this if you're in a specific VPC
+  vpc_id      = "vpc-f85c5890"
 
   ingress {
     from_port   = 22
@@ -36,11 +36,11 @@ resource "aws_security_group" "ec2_sg" {
 
 # EC2 instance that auto-deploys the Django Hello World app
 resource "aws_instance" "django_instance" {
-  ami                         = "ami-023a307f3d27ea427" # Ubuntu 22.04 LTS in ap-south-1
+  ami                         = "ami-023a307f3d27ea427"
   instance_type               = "t3.nano"
-  key_name                    = "django-hello-world-key" # Replace with your actual key pair
+  key_name                    = "django-hello-world-key"
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
-  associate_public_ip_address = true  # Ensure public IP is assigned
+  associate_public_ip_address = true
 
   user_data = <<-EOF
               #!/bin/bash
