@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
+# Wait for any existing apt locks to clear
+echo "Checking for apt locks..."
+while sudo lsof /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+      sudo lsof /var/lib/dpkg/lock >/dev/null 2>&1 || \
+      sudo lsof /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+  echo "Another apt process is running. Waiting 10 seconds..."
+  sleep 10
+done
 
+echo "Updating system and installing Docker..."
 echo "Updating system and installing Docker..."
 sudo apt update -y
 sudo apt install -y docker.io curl
