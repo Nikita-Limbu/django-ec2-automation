@@ -13,70 +13,70 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-    - name: Install Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.6.0
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
 
-    - name: Create SSH Key File
-      run: |
-        echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
-        chmod 600 ec2-key.pem
+      - name: Create SSH Key File
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
+          chmod 600 ec2-key.pem
 
-    - name: Terraform Init and Apply
-      run: |
-        cd infra
-        terraform init
-        terraform apply -auto-approve
+      - name: Terraform Init and Apply
+        run: |
+          cd infra
+          terraform init
+          terraform apply -auto-approve
 
-    - name: Get EC2 Public IP
-      id: get_ip
-      run: |
-        EC2_IP=$(cd infra && terraform output -raw public_ip)
-        if [[ -z "$EC2_IP" ]]; then
-          echo "Error: No public IP found. Terraform may have failed."
-          exit 1
-        fi
-        echo "EC2_IP=$EC2_IP" >> $GITHUB_ENV
+      - name: Get EC2 Public IP
+        id: get_ip
+        run: |
+          EC2_IP=$(cd infra && terraform output -raw public_ip)
+          if [[ -z "$EC2_IP" ]]; then
+            echo "Error: No public IP found. Terraform may have failed."
+            exit 1
+          fi
+          echo "EC2_IP=$EC2_IP" >> $GITHUB_ENV
 
-    - name: Deploy Django App on EC2
-      run: |
-        for i in {1..3}; do
-          ssh -o StrictHostKeyChecking=no -i ec2-key.pem ubuntu=${EC2_IP} <<'EOF'
-sudo apt update -y
-sudo apt install -y docker.io docker-compose
-sudo systemctl start docker
-sudo systemctl enable docker
+      - name: Deploy Django App on EC2
+        run: |
+          for i in {1..3}; do
+            ssh -o StrictHostKeyChecking=no -i ec2-key.pem ubuntu@$EC2_IP <<'EOF'
+              sudo apt update -y
+              sudo apt install -y docker.io docker-compose
+              sudo systemctl start docker
+              sudo systemctl enable docker
 
-# Stop and remove any running container
-sudo docker stop django-container || true
-sudo docker rm django-container || true
+              # Stop and remove any running container
+              sudo docker stop django-container || true
+              sudo docker rm django-container || true
 
-# Pull the latest image
-sudo docker pull nikitalimbu/helloworld-django:latest
+              # Pull the latest image
+              sudo docker pull nikitalimbu/helloworld-django:latest
 
-# Run container
-sudo docker run -d -p 8000:8000 --name django-container nikitalimbu/helloworld-django:latest
+              # Run container
+              sudo docker run -d -p 8000:8000 --name django-container nikitalimbu/helloworld-django:latest
 EOF
 
-          if [ $? -eq 0 ]; then
-            echo "Deployment successful!"
-            exit 0
-          else
-            echo "Retrying deployment... ($i/3)"
-            sleep 10
-          fi
-        done
+            if [ $? -eq 0 ]; then
+              echo "Deployment successful!"
+              exit 0
+            else
+              echo "Retrying deployment... ($i/3)"
+              sleep 10
+            fi
+          done
 
-        echo "Failed to deploy after 3 attempts"
-        exit 1
+          echo "Failed to deploy after 3 attempts"
+          exit 1
