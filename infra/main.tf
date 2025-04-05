@@ -6,6 +6,7 @@ provider "aws" {
 resource "aws_security_group" "ec2_sg" {
   name        = "django-sg-auto"
   description = "Allow SSH and HTTP access"
+  vpc_id      = "vpc-f85c5890"  # Add this if you're in a specific VPC
 
   ingress {
     from_port   = 22
@@ -29,34 +30,35 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   tags = {
-    Name = "django-ec2-sg-auto"
+    Name = "helloworld-ec2-sg"
   }
 }
 
-# Automatically create and deploy a new EC2 instance
+# EC2 instance that auto-deploys the Django Hello World app
 resource "aws_instance" "django_instance" {
-  ami             = "ami-023a307f3d27ea427"   # Use an appropriate AMI for your region
-  instance_type   = "t3.nano"
-  key_name        = "django-hello-world-key"  # Your existing key pair
-  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+  ami                         = "ami-023a307f3d27ea427" # Ubuntu 22.04 LTS in ap-south-1
+  instance_type               = "t3.nano"
+  key_name                    = "django-hello-world-key" # Replace with your actual key pair
+  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
+  associate_public_ip_address = true  # Ensure public IP is assigned
 
-  # This script runs when the instance starts
   user_data = <<-EOF
-    #!/bin/bash
-    sudo apt update -y
-    sudo apt install -y python3 python3-pip
-    sudo apt install -y git
-    git clone https://github.com/Nikita-Limbu/django-ec2-automation.git /home/ubuntu/django-app
-    cd /home/ubuntu/django-app
-    pip3 install -r requirements.txt
-    nohup python3 manage.py runserver 0.0.0.0:8000 &
-  EOF
+              #!/bin/bash
+              apt update -y
+              apt install -y python3 python3-pip git
+              cd /home/ubuntu
+              git clone https://github.com/Nikita-Limbu/django-ec2-automation.git
+              cd django-ec2-automation
+              pip3 install -r requirements.txt
+              nohup python3 manage.py runserver 0.0.0.0:8000 &
+            EOF
 
   tags = {
-    Name = "DjangoHelloWorld-Auto"
+    Name = "Auto-HelloWorld"
   }
 }
 
+# Output the public IP
 output "public_ip" {
   value = aws_instance.django_instance.public_ip
 }
