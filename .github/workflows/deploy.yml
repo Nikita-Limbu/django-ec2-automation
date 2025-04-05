@@ -63,6 +63,21 @@ jobs:
           for i in {1..3}; do
             ssh -o StrictHostKeyChecking=no -i ec2-key.pem ubuntu@$EC2_IP "
               set -e
+
+              # Wait for apt lock and update
+              echo 'Checking for apt lock...'
+              MAX_WAIT=60
+              WAITED=0
+              while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+                if [ \$WAITED -ge \$MAX_WAIT ]; then
+                  echo 'Timed out waiting for apt lock'
+                  exit 1
+                fi
+                echo 'Apt is locked, waiting...'
+                sleep 5
+                WAITED=\$((WAITED+5))
+              done
+
               sudo apt update -y
               sudo apt install -y docker.io curl
               sudo systemctl start docker
