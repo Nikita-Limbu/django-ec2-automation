@@ -2,9 +2,14 @@ provider "aws" {
   region = "ap-south-1"
 }
 
+# Random ID for uniqueness to force recreation
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
 # Security group for EC2
 resource "aws_security_group" "ec2_sg" {
-  name        = "djangoHW-website-ec2_sg"  # Updated name 
+  name        = "djangoHW-website-ec2_sg-${random_id.suffix.hex}" 
   description = "Allow SSH and HTTP access"
   vpc_id      = "vpc-f85c5890"
 
@@ -29,8 +34,8 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "django-helloworld-ec2-sg"
+ tags = {
+    Name = "django-helloworld-ec2-sg-${random_id.suffix.hex}"
   }
 }
 
@@ -54,10 +59,13 @@ resource "aws_instance" "django_instance" {
             EOF
 
   tags = {
-    Name = "Auto-HelloWorld"
+    Name = "Auto-HelloWorld-${random_id.suffix.hex}"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
-
 # Output the public IP
 output "public_ip" {
   value = aws_instance.django_instance.public_ip
