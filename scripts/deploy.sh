@@ -10,9 +10,14 @@ while sudo lsof /var/lib/apt/lists/lock >/dev/null 2>&1 || \
 done
 
 echo "Updating system and installing Docker..."
-echo "Updating system and installing Docker..."
-sudo apt update -y
-sudo apt install -y docker.io curl
+for i in {1..5}; do
+  if sudo apt update -y && sudo apt install -y docker.io curl; then
+    break
+  else
+    echo "apt failed. Retry $i/5 in 10 seconds..."
+    sleep 10
+  fi
+done
 
 echo "Starting and enabling Docker..."
 sudo systemctl start docker
