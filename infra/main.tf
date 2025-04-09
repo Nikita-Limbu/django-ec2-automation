@@ -86,8 +86,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
--- EC2 INSTANCE -------------------
-# EC2 instance that auto-deploys the Django Hello World app
+# ------------------ EC2 INSTANCE -------------------
 resource "aws_instance" "django_instance" {
   ami                         = "ami-023a307f3d27ea427"
   instance_type               = "t3.nano"
