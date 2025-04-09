@@ -15,48 +15,13 @@ provider "aws" {
 }
 
 # ------------------ RANDOM ID ----------------------
-# Random ID for uniqueness to force recreation
-#resource "random_id" "suffix" {
-#  byte_length = 4
-#}
-
-# ------------------ S3 BUCKET ----------------------
-resource "aws_s3_bucket" "tfstate_bucket" {
-  bucket = "my-terraform-state-nikki-123"
-
-  tags = {
-    Name        = "Terraform State Bucket"
-    Environment = "Dev"
-  }
-}
-
-resource "aws_s3_bucket_versioning" "versioning" {
-  bucket = aws_s3_bucket.tfstate_bucket.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
-  bucket = aws_s3_bucket.tfstate_bucket.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-resource "aws_s3_bucket_ownership_controls" "ownership" {
-  bucket = aws_s3_bucket.tfstate_bucket.id
-
-  rule {
-    object_ownership = "BucketOwnerPreferred"
-  }
+resource "random_id" "suffix" {
+  byte_length = 4
 }
 
 # ------------------ SECURITY GROUP -----------------
 resource "aws_security_group" "ec2_sg" {
-  name        = "djangoHW-website-ec2_sg" #${random_id.suffix.hex}
+  name        = "djangoHW-website-ec2_sg-${random_id.suffix.hex}"
   description = "Allow SSH and HTTP access"
   vpc_id      = "vpc-f85c5890"
 
@@ -82,7 +47,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 
  tags = {
-    Name = "django-helloworld-ec2-sg" #${random_id.suffix.hex}
+    Name = "django-helloworld-ec2-sg-${random_id.suffix.hex}"
   }
 }
 
@@ -106,7 +71,7 @@ resource "aws_instance" "django_instance" {
             EOF
 
   tags = {
-    Name = "Auto-HelloWorld"  #${random_id.suffix.hex}
+    Name = "Auto-HW-${random_id.suffix.hex}"
   }
 
   lifecycle {
