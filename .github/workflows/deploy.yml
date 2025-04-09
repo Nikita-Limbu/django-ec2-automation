@@ -33,12 +33,18 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
           chmod 600 ec2-key.pem
 
-      - name: Terraform Init and Apply
+      - name: Terraform Init 
         working-directory: infra
-        run: |
-          terraform init
-          terraform apply -auto-approve
+        run: terraform init
 
+      - name: Destroy old infrastructure (if any)
+        working-directory: infra
+        run: terraform destroy -auto-approve
+
+      - name: Terraform Apply (create new instance)
+        working-directory: infra
+        run: terraform apply -auto-approve    
+        
       - name: Get EC2 Public IP
         id: get_ip
         working-directory: infra
