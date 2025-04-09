@@ -1,15 +1,62 @@
+# ------------------ BACKEND SETUP ------------------
+terraform{
+  backend "s3" {
+    bucket         = "my-terraform-state-nikki-123"
+    key            = "terraform/state.tfstate"
+    region         = "ap-south-1"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
+
+# ------------------ PROVIDER -----------------------
 provider "aws" {
   region = "ap-south-1"
 }
 
+# ------------------ RANDOM ID ----------------------
 # Random ID for uniqueness to force recreation
-resource "random_id" "suffix" {
-  byte_length = 4
+#resource "random_id" "suffix" {
+#  byte_length = 4
+#}
+
+# ------------------ S3 BUCKET ----------------------
+resource "aws_s3_bucket" "tfstate_bucket" {
+  bucket = "my-terraform-state-nikki-123"
+
+  tags = {
+    Name        = "Terraform State Bucket"
+    Environment = "Dev"
+  }
 }
 
-# Security group for EC2
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.tfstate_bucket.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
+  bucket = aws_s3_bucket.tfstate_bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+resource "aws_s3_bucket_ownership_controls" "ownership" {
+  bucket = aws_s3_bucket.tfstate_bucket.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# ------------------ SECURITY GROUP -----------------
 resource "aws_security_group" "ec2_sg" {
-  name        = "djangoHW-website-ec2_sg-${random_id.suffix.hex}" 
+  name        = "djangoHW-website-ec2_sg" #${random_id.suffix.hex}
   description = "Allow SSH and HTTP access"
   vpc_id      = "vpc-f85c5890"
 
@@ -35,10 +82,11 @@ resource "aws_security_group" "ec2_sg" {
   }
 
  tags = {
-    Name = "django-helloworld-ec2-sg-${random_id.suffix.hex}"
+    Name = "django-helloworld-ec2-sg" #${random_id.suffix.hex}
   }
 }
 
+-- EC2 INSTANCE -------------------
 # EC2 instance that auto-deploys the Django Hello World app
 resource "aws_instance" "django_instance" {
   ami                         = "ami-023a307f3d27ea427"
@@ -59,14 +107,15 @@ resource "aws_instance" "django_instance" {
             EOF
 
   tags = {
-    Name = "Auto-HelloWorld-${random_id.suffix.hex}"
+    Name = "Auto-HelloWorld"  #${random_id.suffix.hex}
   }
 
   lifecycle {
     create_before_destroy = true
   }
 }
-# Output the public IP
+
+# ------------------ OUTPUT -------------------------
 output "public_ip" {
   value = aws_instance.django_instance.public_ip
 }
