@@ -1,5 +1,8 @@
 #!/bin/bash
 set -e
+
+echo "✅ Starting optimized deploy.sh"
+
 # Wait for any existing apt locks to clear
 echo "Checking for apt locks..."
 while sudo lsof /var/lib/apt/lists/lock >/dev/null 2>&1 || \
@@ -10,6 +13,8 @@ while sudo lsof /var/lib/apt/lists/lock >/dev/null 2>&1 || \
 done
 
 echo "Updating system and installing Docker..."
+
+# Installing Docker and Curl (will only install if not already installed)
 for i in {1..5}; do
   if sudo apt update -y && sudo apt install -y docker.io curl; then
     break
@@ -31,23 +36,27 @@ chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
 
 docker compose version
 
+# Stopping and removing old Django container
 echo "Stopping old Django container if exists..."
 sudo docker stop django-container || true
 sudo docker rm django-container || true
 
+# Pulling the latest Docker image
 echo "Pulling latest Docker image..."
 sudo docker pull nikitalimbu/helloworld-django:latest
 
-# Load environment variables (if stored in /etc/environment)
+# Load environment variables
 echo "Loading environment variables..."
 set -a
 source /etc/environment
 set +a
-# Run Docker with env vars
+
+# Run the new container with updated environment variables
+echo "Running new container..."
 sudo docker run -d -p 8000:8000 --name django-container \
   -e COGNITO_DOMAIN=${COGNITO_DOMAIN} \
   -e COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID} \
   -e COGNITO_CLIENT_SECRET=${COGNITO_CLIENT_SECRET} \
   nikitalimbu/helloworld-django:latest
-  
-echo "✅ Deployment finished!"
+
+echo "✅ Deployment complete!"
