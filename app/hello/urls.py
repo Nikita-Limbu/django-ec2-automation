@@ -1,6 +1,9 @@
 from django.urls import path
-from .views import hello_world
+from . import views
 
 urlpatterns = [
-    path('', hello_world, name='hello_world'),
+    path('', views.home, name='home'),
+    path('login/', views.login_view, name='login'),
+    path('callback/', views.cognito_callback, name='callback'),
+    path('logout/', views.logout_view, name='logout'),
 ]

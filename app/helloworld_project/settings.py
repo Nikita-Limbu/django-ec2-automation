@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -122,3 +124,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+COGNITO_DOMAIN = os.getenv("COGNITO_DOMAIN")
+COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
+COGNITO_CLIENT_SECRET = os.getenv("COGNITO_CLIENT_SECRET")

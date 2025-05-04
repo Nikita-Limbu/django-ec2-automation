@@ -38,7 +38,16 @@ sudo docker rm django-container || true
 echo "Pulling latest Docker image..."
 sudo docker pull nikitalimbu/helloworld-django:latest
 
-echo "Running Django container..."
-sudo docker run -d -p 8000:8000 --name django-container nikitalimbu/helloworld-django:latest
-
+# Load environment variables (if stored in /etc/environment)
+echo "Loading environment variables..."
+set -a
+source /etc/environment
+set +a
+# Run Docker with env vars
+sudo docker run -d -p 8000:8000 --name django-container \
+  -e COGNITO_DOMAIN=${COGNITO_DOMAIN} \
+  -e COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID} \
+  -e COGNITO_CLIENT_SECRET=${COGNITO_CLIENT_SECRET} \
+  nikitalimbu/helloworld-django:latest
+  
 echo "✅ Deployment finished!"

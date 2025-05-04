@@ -44,7 +44,7 @@ jobs:
       - name: Terraform Apply (create new instance)
         working-directory: infra
         run: terraform apply -auto-approve    
-        
+
       - name: Get EC2 Public IP
         id: get_ip
         working-directory: infra
@@ -74,6 +74,9 @@ jobs:
 
             echo "Executing deploy.sh on EC2..."
             ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=5 -i ec2-key.pem ubuntu@$EC2_IP "
+              echo 'COGNITO_DOMAIN=${{ secrets.COGNITO_DOMAIN }}' | sudo tee -a /etc/environment
+              echo 'COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}' | sudo tee -a /etc/environment
+              echo 'COGNITO_CLIENT_SECRET=${{ secrets.COGNITO_CLIENT_SECRET }}' | sudo tee -a /etc/environment
               chmod +x /home/ubuntu/deploy.sh
               bash /home/ubuntu/deploy.sh
             "
